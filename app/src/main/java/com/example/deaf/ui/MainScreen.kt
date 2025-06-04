@@ -13,41 +13,62 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.deaf.viewmodel.AudioViewModel
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+
 
 @Composable
 fun MainScreen() {
     val context = LocalContext.current
     val audioViewModel: AudioViewModel = viewModel()
     val isRecording by audioViewModel.isRecording.collectAsState()
-    val transcription by audioViewModel.transcription.collectAsState()
+    val transcriptionList by audioViewModel.transcriptionList.collectAsState()
+    val livePartial by audioViewModel.livePartial.collectAsState()
+    val transcription = transcriptionList.joinToString(" ")
+    val listState = rememberLazyListState()
 
-    Column(
+    val fullText = if (transcription.isBlank() && livePartial.isBlank()) {
+        "Aquí aparecerá el texto transcrito."
+    } else {
+        "$transcription $livePartial"
+    }
+
+    LaunchedEffect(fullText) {
+        listState.animateScrollToItem(0)
+    }
+
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Top,
+        state = listState,
     ) {
-        Button(
-            onClick = {
-                if (isRecording) {
-                    val filename = audioViewModel.stopRecording(context)
-                    Toast.makeText(context, "Transcripción guardada en: $filename", Toast.LENGTH_LONG).show()
-                } else {
-                    audioViewModel.startRecording(context)
-                    Toast.makeText(context, "Grabando...", Toast.LENGTH_SHORT).show()
+        item {
+            Spacer(modifier = Modifier.height(50.dp))
+
+            Button(
+                onClick = {
+                    if (isRecording) {
+                        audioViewModel.stopRecording(context)
+                        Toast.makeText(context, "Transcripción guardada", Toast.LENGTH_LONG).show()
+                    } else {
+                        audioViewModel.startRecording(context)
+                        Toast.makeText(context, "Grabando...", Toast.LENGTH_SHORT).show()
+                    }
                 }
+            ) {
+                Text(text = if (isRecording) "Detener" else "Grabar")
             }
-        ) {
-            Text(text = if (isRecording) "Detener" else "Grabar")
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = fullText,
+                fontSize = 18.sp,
+                textAlign = TextAlign.Center
+            )
         }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text(
-            text = if (transcription.isNotBlank()) transcription else "Aquí aparecerá el texto transcrito.",
-            fontSize = 18.sp,
-            textAlign = TextAlign.Center
-        )
     }
 }
