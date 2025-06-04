@@ -2,7 +2,8 @@ package com.example.deaf.ui
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,9 +31,9 @@ fun MainScreen() {
         Button(
             onClick = {
                 if (isRecording) {
-                    audioViewModel.stopRecording()
-                    Toast.makeText(context, "Grabación detenida", Toast.LENGTH_SHORT).show()
-            } else {
+                    val filename = audioViewModel.stopRecording(context)
+                    Toast.makeText(context, "Transcripción guardada en: $filename", Toast.LENGTH_LONG).show()
+                } else {
                     audioViewModel.startRecording(context)
                     Toast.makeText(context, "Grabando...", Toast.LENGTH_SHORT).show()
                 }

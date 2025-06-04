@@ -38,9 +38,7 @@ class AudioViewModel : ViewModel() {
             }
 
             override fun onRmsChanged(rmsdB: Float) {}
-
             override fun onBufferReceived(buffer: ByteArray?) {}
-
             override fun onEndOfSpeech() {}
 
             override fun onError(error: Int) {
@@ -81,17 +79,18 @@ class AudioViewModel : ViewModel() {
         speechRecognizer?.startListening(recognizerIntent)
     }
 
-    fun stopRecording() {
-        fun saveTranscriptionToFile(context: Context): String {
-            val filename = "transcripcion_${System.currentTimeMillis()}.txt"
-            val fileOutput = context.openFileOutput(filename, Context.MODE_PRIVATE)
-            fileOutput.write(transcription.value.toByteArray())
-            fileOutput.close()
-            return filename
-        }
-
+    fun stopRecording(context: Context): String {
         speechRecognizer?.stopListening()
         _isRecording.value = false
+        return saveTranscriptionToFile(context)
+    }
+
+    private fun saveTranscriptionToFile(context: Context): String {
+        val filename = "transcripcion_${System.currentTimeMillis()}.txt"
+        val fileOutput = context.openFileOutput(filename, Context.MODE_PRIVATE)
+        fileOutput.write(transcription.value.toByteArray())
+        fileOutput.close()
+        return filename
     }
 
     private fun releaseRecognizer() {
