@@ -1,5 +1,7 @@
 package com.example.deaf.ui
 
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.deaf.viewmodel.AudioViewModel
 import android.Manifest
 import android.os.Bundle
 import android.widget.Toast
@@ -30,7 +32,19 @@ class MainActivity : ComponentActivity() {
         requestPermissionsIfNecessary()
 
         setContent {
-            MainScreen()
+            val context = this
+            val audioViewModel: AudioViewModel = viewModel()
+
+            MainScreen(
+                onEditClick = {
+                    // Aquí puedes agregar lo que quieras que pase al pulsar el botón Editar
+                    // Por ejemplo, navegar a la pantalla de edición, pero si aún no tienes navegación,
+                    // déjalo vacío o un Toast
+                    Toast.makeText(context, "Editar transcripción", Toast.LENGTH_SHORT).show()
+                },
+                viewModel = audioViewModel,
+                context = context
+            )
         }
     }
 

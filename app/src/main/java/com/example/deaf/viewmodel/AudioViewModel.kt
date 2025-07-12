@@ -12,12 +12,13 @@ import kotlinx.coroutines.flow.StateFlow
 
 class AudioViewModel : ViewModel() {
 
+    val transcribedText = MutableStateFlow("")
+
     private var keepListening: Boolean = true
     private var speechRecognizer: SpeechRecognizer? = null
     private var recognizerIntent: Intent? = null
     private var isListening = false
     private var isBusy = false
-
 
     private val _livePartial = MutableStateFlow("")
     val livePartial: StateFlow<String> = _livePartial
@@ -28,11 +29,15 @@ class AudioViewModel : ViewModel() {
     private val _transcriptionList = MutableStateFlow<List<String>>(emptyList())
     val transcriptionList: StateFlow<List<String>> = _transcriptionList
 
+    private var autosaveFilename: String = "transcripcion_autosave.txt"
+
     fun startRecording(context: Context) {
         if (isBusy || _isRecording.value) return
         isBusy = true
+
         if (!SpeechRecognizer.isRecognitionAvailable(context)) {
-            _transcriptionList.value = _transcriptionList.value + "Reconocimiento de voz no disponible en este dispositivo."
+            _transcriptionList.value += "Reconocimiento de voz no disponible en este dispositivo."
+            isBusy = false
             return
         }
 
@@ -67,14 +72,14 @@ class AudioViewModel : ViewModel() {
                 if (!matches.isNullOrEmpty()) {
                     val finalText = matches[0]
                     _transcriptionList.value += finalText
+
+                    saveLatestTranscriptionLine(context, finalText)
                 }
 
-                _livePartial.value = ""  // Limpia texto parcial
+                _livePartial.value = ""
 
                 if (keepListening) {
-                    speechRecognizer?.stopListening()
-                    speechRecognizer?.cancel()
-                    speechRecognizer?.startListening(createRecognizerIntent())
+                    restartListeningIfNeeded()
                 } else {
                     _isRecording.value = false
                     isBusy = false
@@ -99,12 +104,13 @@ class AudioViewModel : ViewModel() {
         isBusy = true
         _isRecording.value = false
         isListening = false
+
         speechRecognizer?.stopListening()
         speechRecognizer?.cancel()
         speechRecognizer?.destroy()
         speechRecognizer = null
 
-        saveTranscriptionToFile(context)
+        saveFullTranscriptionToFile(context)
 
         isBusy = false
     }
@@ -125,12 +131,55 @@ class AudioViewModel : ViewModel() {
         }
     }
 
-    private fun saveTranscriptionToFile(context: Context): String {
+    private fun saveLatestTranscriptionLine(context: Context, line: String) {
+        val fileOutput = context.openFileOutput(autosaveFilename, Context.MODE_APPEND)
+        fileOutput.write((line + "\n").toByteArray())
+        fileOutput.close()
+    }
+
+    private fun saveFullTranscriptionToFile(context: Context): String {
         val filename = "transcripcion_${System.currentTimeMillis()}.txt"
         val fileOutput = context.openFileOutput(filename, Context.MODE_PRIVATE)
         fileOutput.write(transcriptionList.value.joinToString("\n").toByteArray())
         fileOutput.close()
         return filename
+    }
+
+    fun saveEditedTranscription(context: Context, filename: String, newContent: String) {
+        try {
+            val fileOutput = context.openFileOutput(filename, Context.MODE_PRIVATE)
+            fileOutput.write(newContent.toByteArray())
+            fileOutput.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun loadTranscriptionFromFile(context: Context, filename: String): String {
+        return try {
+            val content = context.openFileInput(filename).bufferedReader().use { it.readText() }
+            transcribedText.value = content
+            content
+        } catch (e: Exception) {
+            val error = "No se pudo cargar el archivo: ${e.message}"
+            transcribedText.value = error
+            error
+        }
+    }
+
+    fun saveTranscription(context: Context, content: String) {
+        val filename = "transcription_${System.currentTimeMillis()}.txt"
+        val file = context.filesDir.resolve(filename)
+        file.writeText(content)
+    }
+
+    fun getSavedTranscriptionFiles(context: Context): List<String> {
+        val files = context.fileList()
+        return files.filter { it.startsWith("transcripcion_") && it.endsWith(".txt") }
+    }
+
+    fun updateTranscribedText(newText: String) {
+        transcribedText.value = newText
     }
 
     override fun onCleared() {
