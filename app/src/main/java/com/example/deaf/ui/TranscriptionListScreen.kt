@@ -18,7 +18,6 @@ fun TranscriptionEditorScreen(
 ) {
     var editedText by remember { mutableStateOf("") }
 
-    // Carga el contenido del archivo cuando la pantalla se abre
     LaunchedEffect(filename) {
         editedText = audioViewModel.loadTranscriptionFromFile(context, filename)
     }

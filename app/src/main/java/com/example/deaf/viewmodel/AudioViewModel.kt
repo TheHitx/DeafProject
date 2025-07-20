@@ -9,6 +9,7 @@ import android.speech.SpeechRecognizer
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -140,13 +141,24 @@ class AudioViewModel : ViewModel() {
     }
 
     fun saveFullTranscriptionToFile(context: Context): String {
-        val dateFormat = SimpleDateFormat("MMMM dd, yyyy HH-mm", Locale.ENGLISH) // Ejemplo: July 07, 2025 14-35
+        val dateFormat = SimpleDateFormat("MMMM dd, yyyy HH-mm", Locale.ENGLISH)
         val dateString = dateFormat.format(Date())
-        val filename = "transcripcion_$dateString.txt"
-        val fileOutput = context.openFileOutput(filename, Context.MODE_PRIVATE)
+        val baseName = "transcripcion_$dateString"
+
+        val textFilename = "$baseName.txt"
+        val fileOutput = context.openFileOutput(textFilename, Context.MODE_PRIVATE)
         fileOutput.write(transcriptionList.value.joinToString("\n").toByteArray())
         fileOutput.close()
-        return filename
+
+        // RENOMBRAR EL AUDIO SI EXISTE
+        val audioDir = context.filesDir
+        val tempAudioFile = File(audioDir, "audio_temp.mp4")
+        if (tempAudioFile.exists()) {
+            val newAudioFile = File(audioDir, "$baseName.mp4")
+            tempAudioFile.renameTo(newAudioFile)
+        }
+
+        return textFilename
     }
 
     fun saveEditedTranscription(context: Context, filename: String, newContent: String) {
