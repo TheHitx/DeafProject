@@ -1,19 +1,15 @@
 package com.example.deaf.ui
 
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.deaf.viewmodel.AudioViewModel
 import android.Manifest
+import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
-import androidx.core.content.PermissionChecker.PERMISSION_GRANTED
-
+import androidx.activity.compose.setContent
 
 class MainActivity : ComponentActivity() {
-
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -32,19 +28,7 @@ class MainActivity : ComponentActivity() {
         requestPermissionsIfNecessary()
 
         setContent {
-            val context = this
-            val audioViewModel: AudioViewModel = viewModel()
-
-            MainScreen(
-                onEditClick = {
-                    // Aquí puedes agregar lo que quieras que pase al pulsar el botón Editar
-                    // Por ejemplo, navegar a la pantalla de edición, pero si aún no tienes navegación,
-                    // déjalo vacío o un Toast
-                    Toast.makeText(context, "Editar transcripción", Toast.LENGTH_SHORT).show()
-                },
-                viewModel = audioViewModel,
-                context = context
-            )
+            AppNavigation()
         }
     }
 

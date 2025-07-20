@@ -4,33 +4,54 @@ import android.content.Context
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.deaf.viewmodel.AudioViewModel
 
 @Composable
-fun TranscriptionListScreen(
+fun TranscriptionEditorScreen(
     context: Context,
-    viewModel: AudioViewModel,
-    onFileSelected: (String) -> Unit
+    audioViewModel: AudioViewModel,
+    filename: String,
+    onSaveSuccess: () -> Unit
 ) {
-    val files = remember { viewModel.getSavedTranscriptionFiles(context) }
+    var editedText by remember { mutableStateOf("") }
 
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(16.dp)) {
+    // Carga el contenido del archivo cuando la pantalla se abre
+    LaunchedEffect(filename) {
+        editedText = audioViewModel.loadTranscriptionFromFile(context, filename)
+    }
 
-        Text("Transcripciones guardadas:", style = MaterialTheme.typography.titleMedium)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Text("Editar transcripción:", style = MaterialTheme.typography.titleMedium)
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        files.forEach { filename ->
-            Button(
-                onClick = { onFileSelected(filename) },
-                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-            ) {
-                Text(filename)
-            }
+        OutlinedTextField(
+            value = editedText,
+            onValueChange = { editedText = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            maxLines = Int.MAX_VALUE,
+            singleLine = false
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = {
+                val newFilename = audioViewModel.saveEditedTranscriptionWithDate(context, editedText)
+                onSaveSuccess()
+            },
+            modifier = Modifier.align(Alignment.End)
+        ) {
+            Text("Guardar")
         }
     }
 }

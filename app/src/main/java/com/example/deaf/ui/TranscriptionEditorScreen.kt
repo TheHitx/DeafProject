@@ -1,28 +1,22 @@
 package com.example.deaf.ui
 
-import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.deaf.viewmodel.AudioViewModel
 
 @Composable
 fun TranscriptionEditorScreen(
-    filename: String,
-    audioViewModel: AudioViewModel = viewModel(),
+    audioViewModel: AudioViewModel,
     onSaveSuccess: () -> Unit
 ) {
     val context = LocalContext.current
-
-    LaunchedEffect(filename) {
-        audioViewModel.loadTranscriptionFromFile(context, filename)
-    }
 
     val transcribedText by audioViewModel.transcribedText.collectAsState()
 
@@ -56,7 +50,7 @@ fun TranscriptionEditorScreen(
 
         Button(
             onClick = {
-                audioViewModel.saveEditedTranscription(context, filename, editedText)
+                audioViewModel.saveEditedTranscription(context, "nombre_archivo.txt", editedText)
                 onSaveSuccess()
             },
             modifier = Modifier.align(Alignment.End)

@@ -1,80 +1,79 @@
 package com.example.deaf.ui
 
 import android.content.Context
-import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.deaf.viewmodel.AudioViewModel
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.example.deaf.viewmodel.AudioViewModel
 
 @Composable
 fun MainScreen(
     onEditClick: () -> Unit,
     viewModel: AudioViewModel,
-    context: Context
+    context: Context,
+    onFileSelected: (String) -> Unit
 ) {
-    val isRecording by viewModel.isRecording.collectAsState()
-    val transcriptionList by viewModel.transcriptionList.collectAsState()
     val livePartial by viewModel.livePartial.collectAsState()
-    val transcription = transcriptionList.joinToString(" ")
-    val listState = rememberLazyListState()
+    val isRecording by viewModel.isRecording.collectAsState()
+    val savedFiles = remember { mutableStateListOf<String>() }
 
-    val fullText = if (transcription.isBlank() && livePartial.isBlank()) {
-        "Aquí aparecerá el texto transcrito."
-    } else {
-        "$transcription $livePartial"
+
+    LaunchedEffect(Unit) {
+        savedFiles.clear()
+        savedFiles.addAll(viewModel.getSavedTranscriptionFiles(context))
     }
 
-    LaunchedEffect(fullText) {
-        listState.animateScrollToItem(0)
-    }
+    Column(modifier = Modifier.padding(16.dp)) {
+        Text(
+            text = if (isRecording) "Grabando..." else "Presiona para grabar",
+            style = MaterialTheme.typography.headlineSmall
+        )
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top,
-        state = listState,
-    ) {
-        item {
-            Spacer(modifier = Modifier.height(50.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-            Button(
-                onClick = {
-                    if (isRecording) {
-                        viewModel.stopRecording(context)
-                        Toast.makeText(context, "Transcripción guardada", Toast.LENGTH_LONG).show()
-                    } else {
-                        viewModel.startRecording(context)
-                        Toast.makeText(context, "Grabando...", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            ) {
-                Text(text = if (isRecording) "Detener" else "Grabar")
+        Button(
+            onClick = {
+                if (!isRecording) viewModel.startRecording(context)
+                else viewModel.stopRecording(context)
             }
-            Spacer(modifier = Modifier.height(16.dp))
+        ) {
+            Text(if (isRecording) "Detener" else "Grabar")
+        }
 
-            Button(onClick = onEditClick) {
-                Text("Editar transcripción")
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "Transcripción parcial:",
+            style = MaterialTheme.typography.titleMedium
+        )
+        Text(livePartial)
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Button(onClick = onEditClick) {
+            Text("Editar Transcripción")
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text("Archivos guardados:", style = MaterialTheme.typography.titleMedium)
+
+        LazyColumn {
+            items(savedFiles) { filename ->
+                Text(
+                    text = filename,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onFileSelected(filename) }
+                        .padding(vertical = 8.dp),
+                    style = MaterialTheme.typography.bodyLarge
+                )
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = fullText,
-                fontSize = 18.sp,
-                textAlign = TextAlign.Center
-            )
         }
     }
 }

@@ -9,6 +9,8 @@ import android.speech.SpeechRecognizer
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import java.text.SimpleDateFormat
+import java.util.*
 
 class AudioViewModel : ViewModel() {
 
@@ -137,8 +139,10 @@ class AudioViewModel : ViewModel() {
         fileOutput.close()
     }
 
-    private fun saveFullTranscriptionToFile(context: Context): String {
-        val filename = "transcripcion_${System.currentTimeMillis()}.txt"
+    fun saveFullTranscriptionToFile(context: Context): String {
+        val dateFormat = SimpleDateFormat("MMMM dd, yyyy HH-mm", Locale.ENGLISH) // Ejemplo: July 07, 2025 14-35
+        val dateString = dateFormat.format(Date())
+        val filename = "transcripcion_$dateString.txt"
         val fileOutput = context.openFileOutput(filename, Context.MODE_PRIVATE)
         fileOutput.write(transcriptionList.value.joinToString("\n").toByteArray())
         fileOutput.close()
@@ -153,6 +157,20 @@ class AudioViewModel : ViewModel() {
         } catch (e: Exception) {
             e.printStackTrace()
         }
+    }
+
+    fun saveEditedTranscriptionWithDate(context: Context, newContent: String): String {
+        val dateFormat = SimpleDateFormat("MMMM dd, yyyy HH-mm", Locale.ENGLISH)
+        val dateString = dateFormat.format(Date())
+        val filename = "transcripcion_editada_$dateString.txt"
+        try {
+            val fileOutput = context.openFileOutput(filename, Context.MODE_PRIVATE)
+            fileOutput.write(newContent.toByteArray())
+            fileOutput.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return filename
     }
 
     fun loadTranscriptionFromFile(context: Context, filename: String): String {
